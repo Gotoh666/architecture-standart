@@ -42,3 +42,6 @@ Deposit Service Worker как один cron-job. Если упадёт или н
 ### Ограничения:  
 Передача ставок в партнерский кол-центр только через файл.  
 Внешняя система полностью контролирует обработку файла.  
+
+### **RoadMap**
+![containerC4](https://github.com/Gotoh666/architecture-standart/blob/tasks/Task4/RoadMap.png)
