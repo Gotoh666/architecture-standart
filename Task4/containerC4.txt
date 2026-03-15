@@ -1,0 +1,43 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(userCall, "Сотрудник кол-центра", "")
+Person(userExtCall, "Сотрудник партнерского кол-центра", "")
+
+System_Ext(extcall, "Система партнёрского кол-центра")
+
+System_Boundary(system, "Система банка (Только передача ставок в систему кол центра)"){
+
+Container(call, "Система кол-центра", "CRM system, Java, React, PostgreSQL")
+
+Container(rates_service, "Rates Service", "ASP.NET Core")
+note right of rates_service
+Кэшиурет ставки в памяти для быстрого возврата в систему кол-центра
+end note
+
+Container(rates_service_worker, "Rates Service Worker", "Crone job")
+note right of rates_service_worker
+Формирует файл со ставками и отправляет в партнерский кол-центр
+end note
+
+ContainerDb(rates_service_db, Rates Service DB", "MS SQL")
+ContainerDb(call_db, Call DB", "PostgreSQL")
+
+
+}
+
+Rel(userCall, call, "Просматривает ставки по депозитам", "")
+Rel(userExtCall, extcall, "Просматривает ставки по депозитам", "")
+
+
+Rel(call, rates_service, "Получает ставки", "REST")
+Rel(rates_service_worker, extcall, "Отправлет файл со ставками", "SFTP")
+
+Rel(rates_service, rates_service_worker, "Уведомляет об обновлении ставок", "")
+
+
+Rel(rates_service, rates_service_db, "CRUD по ставкам", "")
+Rel(rates_service_worker, rates_service_db, "Получает ставки", "")
+Rel(call, call_db, "CRUD по данным кол-центра", "")
+
+@enduml

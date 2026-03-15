@@ -1,0 +1,21 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(userCall, "Сотрудник кол-центра", "")
+Person(userExtCall, "Сотрудник партнерского кол-центра", "")
+
+System_Ext(extcall, "Система партнёрского кол-центра")
+
+System_Boundary(system, "Система банка "){
+System(call, "Система кол-центра")
+System(rates_service, "Rates Service")
+}
+
+Rel(userCall, call, "Обрабатывает заявки клиентов, просматривает ставки", "")
+
+Rel(userExtCall, extcall, "Обрабатывает заявки клиентов, просматривает ставки", "")
+
+Rel(rates_service, extcall, "Передает файл со ставками", "SFTP")
+Rel(call,rates_service , "Получает ставки", "REST")
+
+@enduml
