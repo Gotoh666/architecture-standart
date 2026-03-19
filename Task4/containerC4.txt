@@ -6,8 +6,11 @@ Person(userExtCall, "Сотрудник партнерского кол-цент
 
 System_Ext(extcall, "Система партнёрского кол-центра")
 
-System_Boundary(system, "Система банка (Только передача ставок в систему кол центра)"){
 
+
+
+System_Boundary(system, "Система банка (Только передача ставок в систему кол центра)"){
+Container(sftp, "sftp server", "")
 Container(call, "Система кол-центра", "CRM system, Java, React, PostgreSQL")
 
 Container(rates_service, "Rates Service", "ASP.NET Core")
@@ -31,7 +34,8 @@ Rel(userExtCall, extcall, "Просматривает ставки по депо
 
 
 Rel(call, rates_service, "Получает ставки", "REST")
-Rel(rates_service_worker, extcall, "Отправлет файл со ставками", "SFTP")
+Rel(rates_service_worker, sftp, "Отправлет файл со ставками", "SFTP")
+Rel(extcall, sftp, "Получает файл со ставками", "SFTP")
 
 Rel(rates_service, rates_service_worker, "Уведомляет об обновлении ставок", "")
 

@@ -20,6 +20,8 @@ Container(call, "Система кол-центра", "CRM system, Java, React, 
 Container(smsgateway, "СМС-шлюз телеком-оператора", "")
 Container(site, "Сайт", "PHP, React")
 
+Container(excel, "Excel-файл ставок", "Manual tool")
+System_Ext(email, "Корпоративная почта")
 }
 
 
@@ -39,5 +41,33 @@ Rel(abs, smsgateway, "Отправка смс", "")
 
 Rel(call, abs, "Передает заявки", "")
 Rel(userExtCall, abs, "Передает заявки", "")
+
+
+' Расчет ставок
+Rel(userDeposit, excel, "Рассчитывает ставки", "")
+Rel(userCredit, excel, "Передает данные по рискам", "")
+
+' Обмен между кредитами и депозитами
+Rel(userDeposit, email, "Запрашивает данные по ставке", "")
+Rel(userCredit, email, "Отвечает с данными по ставке", "")
+
+' Ежедневная рассылка ставок
+Rel(userCredit, email, "Отправляет ежедневные актуальные ставки", "")
+Rel(email, userDeposit, "Получает актуальные ставки", "")
+
+' Фронт → бэк (если клиент пришел)
+Rel(userfront, email, "Запрашивает ставку", "")
+Rel(email, userDeposit, "Получает запрос на ставку", "")
+
+' Ответ обратно
+Rel(userDeposit, email, "Отправляет ставку", "")
+Rel(email, userfront, "Получает ставку", "")
+
+' Кол-центр → бэк
+Rel(call, abs, "Создает обращение", "")
+Rel(userDeposit, abs, "Обрабатывает заявку", "")
+
+' Заведение депозита
+Rel(userfront, abs, "Создает депозит", "")
 
 @enduml
