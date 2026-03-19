@@ -1,0 +1,119 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Клиент банка", "")
+Person(userfront, "Сотрудник фронт офиса", "")
+note right of userfront
+На время трансформации работает в двух интерфейсах
+В старом АБС и в новом фронтенде
+end note
+Person(userBack, "Сотрудник бэк офиса", "")
+note right of userBack
+На время трансформации работает в двух интерфейсах
+В старом АБС и в новом фронтенде
+end note
+Person(userCall, "Сотрудник кол-центра", "")
+Person(userExtCall, "Сотрудник партнерского кол-центра", "")
+
+System_Ext(teleoperator, "Телеком-оператор")
+System_Ext(extcall, "Система партнёрского кол-центра")
+
+System_Boundary(system, "Система банка (Только депозиты)"){
+
+Container(site, "Сайт", "PHP, React")
+Container(call, "Система кол-центра", "CRM system, Java, React, PostgreSQL")
+Container(smsgateway, "СМС-шлюз телеком-оператора", "")
+
+System_Boundary(internetbank_boundary, "Интернет-банк") {
+    Container(ib_web, "Web приложение", "ASP.NET MVC 4.5")
+    Container(ib_backend, "Backend логика", ".NET Framework")
+    ContainerDb(ib_db, "БД интернет-банка", "MS SQL")
+    Container(ib_sms, "SMS модуль", ".NET")
+    }
+
+
+System_Boundary(abs_boundary, "АБС") {
+    Container(abs_client, "Десктоп клиент", "Delphi")
+    Container(abs_logic, "Бизнес-логика", "PL/SQL")
+    ContainerDb(abs_db, "БД АБС", "Oracle")
+}
+
+Container(bff, "BFF", "Asp NET Core, Yarp")
+note right of bff
+Шлюз между существюущими системами, новыми микросервисами и АБС
+Распределяет запросы, балансирует нагрузку
+В будущем возьмет на себя роль BFF
+end note
+
+Container(frontend, "Frontend", "react.js")
+note right of frontend
+Простое веб приложение для работы с депозитами, ставками
+В будущем будет развиваться в фронтенде всей системы банка для сотрудников
+end note
+
+Container(deposit_service, "Deposit Service", "ASP.NET Core")
+Container(rates_service, "Rates Service", "ASP.NET Core")
+note right of rates_service
+Сервис ставок, расчитывает и хранит ставки.
+Актуальные ставки кешируются в памяти.
+end note
+Container(deposit_worker, "Deposit Worker", "ASP.NET Core")
+note right of deposit_worker
+Воркер, ерализует простую очередь для взаимодействия с АБС
+end note
+
+Container(acl_gateway, "ABS Gateway / Anti-Corruption Layer", "ASP.NET Core")
+note right of acl_gateway
+Шлюз между Deposit Service и ABS.
+Трансформирует модели данных для новой системы
+end note
+
+ContainerDb(deposit_service_db, "Deposit Service DB", "MS SQL")
+ContainerDb(call_db, "Call DB", "PostgreSQL")
+ContainerDb(rates_service_db, "Rates Service DB", "MS SQL")
+
+}
+
+Rel(ib_web, ib_backend, "HTTPS")
+Rel(ib_backend, ib_db, "CRUD")
+Rel(ib_backend, ib_sms, "Отправка SMS")
+Rel(ib_sms, smsgateway, "Отправка SMS")
+
+Rel(userfront, abs_client, "Работает с банковскими операциями", "")
+Rel(userBack, abs_client, "Работает с банковскими операциями", "")
+Rel(userfront, frontend, "Работает с депозитами", "")
+Rel(userBack, frontend, "Работает с депозитами", "")
+
+Rel(userCall, call, "Создает заявки на депозит", "")
+Rel(userExtCall, extcall, "Создает заявки на депозит", "")
+
+Rel(client, site, "Работает с депозитами", "")
+Rel(client, ib_web, "Работает с депозитами", "")
+
+Rel(smsgateway, teleoperator, "Отправка смс", "")
+
+Rel(abs_client, abs_db, "Запросы")
+Rel(abs_logic, abs_db, "Хранимые процедуры")
+Rel(abs_logic, smsgateway, "Отправка SMS")
+
+Rel(site, bff, "Работает с депозитами", "")
+Rel(ib_backend, bff, "Работает с депозитами. Проводит платежи, открывает дебетовые счета", "")
+Rel(call, bff, "Передает заявки", "")
+Rel(extcall, bff, "Создает заявки на депозит", "")
+
+Rel(bff, deposit_service, "Запросы к сервису депозитов", "")
+Rel(bff, rates_service, "Запросы к сервису ставок", "")
+
+Rel(deposit_service, deposit_worker, "Операции по депозитам", "")
+Rel(deposit_worker, acl_gateway, "Операции по депозитам", "")
+Rel(acl_gateway, abs_logic, "Вызов процедур / API", "")
+Rel(abs_logic, abs_db, "Работа с данными", "")
+
+Rel(deposit_service, deposit_service_db, "CRUD по депозитам", "")
+Rel(call, call_db, "", "")
+Rel(rates_service, rates_service_db, "", "")
+
+Rel(deposit_service, rates_service, "Получает ставки", "")
+Rel(frontend, bff, "Получает данные по депозитам, создает депозит, Получает данные по ставкам, обновляет ставки", "")
+
+@enduml

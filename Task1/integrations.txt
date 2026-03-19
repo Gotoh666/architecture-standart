@@ -1,0 +1,73 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Клиент банка", "")
+
+Person(userfront, "Сотрудник фронт офиса", "")
+Person(userCredit, "Сотрудники отдела кредитования", "")
+Person(userDeposit, "Сотрудники отдела депозитов", "")
+Person(userCall, "Сотрудник кол-центра", "")
+Person(userExtCall, "Сотрудник партнерского кол-центра", "")
+
+System_Ext(teleoperator, "Телеком-оператор")
+System_Ext(extcall, "Система партнёрского кол-центра")
+
+System_Boundary(system, "IT ландшафт"){
+
+Container(internetbank, "Интернет-банк", "ASP.NET MVC 4.5, MS SQL")
+Container(abs, "АБС", "Delphi, Oracle")
+Container(call, "Система кол-центра", "CRM system, Java, React, PostgreSQL")
+Container(smsgateway, "СМС-шлюз телеком-оператора", "")
+Container(site, "Сайт", "PHP, React")
+
+Container(excel, "Excel-файл ставок", "Manual tool")
+System_Ext(email, "Корпоративная почта")
+}
+
+
+Rel(userfront, abs, "", "")
+Rel(userCredit, abs, "Работа с кредитами", "")
+Rel(userDeposit, abs, "Работа с депозитами", "")
+
+Rel(userCall, call, "", "")
+Rel(userExtCall, extcall, "", "")
+
+Rel(client, site, "Просматривает маркетинговую информацию", "")
+Rel(client, internetbank, "Проводит платежи, открывает дебетовые счета", "")
+
+Rel(internetbank, abs, "Проводит платежи, открывает дебетовые счета", "")
+Rel(smsgateway, teleoperator, "Отправка смс", "")
+Rel(abs, smsgateway, "Отправка смс", "")
+
+Rel(call, abs, "Передает заявки", "")
+Rel(userExtCall, abs, "Передает заявки", "")
+
+
+' Расчет ставок
+Rel(userDeposit, excel, "Рассчитывает ставки", "")
+Rel(userCredit, excel, "Передает данные по рискам", "")
+
+' Обмен между кредитами и депозитами
+Rel(userDeposit, email, "Запрашивает данные по ставке", "")
+Rel(userCredit, email, "Отвечает с данными по ставке", "")
+
+' Ежедневная рассылка ставок
+Rel(userCredit, email, "Отправляет ежедневные актуальные ставки", "")
+Rel(email, userDeposit, "Получает актуальные ставки", "")
+
+' Фронт → бэк (если клиент пришел)
+Rel(userfront, email, "Запрашивает ставку", "")
+Rel(email, userDeposit, "Получает запрос на ставку", "")
+
+' Ответ обратно
+Rel(userDeposit, email, "Отправляет ставку", "")
+Rel(email, userfront, "Получает ставку", "")
+
+' Кол-центр → бэк
+Rel(call, abs, "Создает обращение", "")
+Rel(userDeposit, abs, "Обрабатывает заявку", "")
+
+' Заведение депозита
+Rel(userfront, abs, "Создает депозит", "")
+
+@enduml
